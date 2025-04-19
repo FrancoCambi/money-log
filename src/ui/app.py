@@ -9,7 +9,7 @@ class App:
     def __init__(self, root: tk.Tk):
         self.root: tk.Tk = root
         self.root.title("💰 MoneyLog")
-        self.root.geometry("840x820")
+        self.root.geometry("850x820")
         self.root.configure(bg="#f4f4f4")
         self.tracker: FinanceTracker = FinanceTracker()
         self.data: Data = Data()
@@ -96,7 +96,7 @@ class App:
 
         headers = ["Date", "Category", "Sub-Category", "Type", "Amount", "Action"]
         for col, h in enumerate(headers):
-            tk.Label(self.scrollable_frame, text=h, font=("Arial", 10, "bold"), borderwidth=2, relief="groove", width=15, bg="lightgray").grid(row=0, column=col, sticky="nsew")
+            tk.Label(self.scrollable_frame, text=h, font=("Comic Sans MS", 10, "bold"), borderwidth=2, relief="groove", width=15, bg="lightgray").grid(row=0, column=col, sticky="nsew")
 
         # --- Charts Button ---
         chart_frame = tk.Frame(self.root, bg="#f4f4f4")
@@ -121,22 +121,26 @@ class App:
         # Colors
         bg_color = "#66ff66" if transaction.type == "income" else "#FF6666"
 
-        row = len(self.scrollable_frame.winfo_children()) - 1  # -1 porque headers ocupa la primera fila
+        row = len(self.scrollable_frame.winfo_children()) - 1
 
-        date_frame = tk.Label(self.scrollable_frame, text=date, borderwidth=1, relief="solid", width=12, bg=bg_color)
+        date_frame = tk.Label(self.scrollable_frame, text=date, borderwidth=1, relief="solid", width=12, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         date_frame.grid(row=row+1, column=0, sticky="nsew")
-        category_frame = tk.Label(self.scrollable_frame, text=category, borderwidth=1, relief="solid", width=15, bg=bg_color)
+
+        category_frame = tk.Label(self.scrollable_frame, text=category, borderwidth=1, relief="solid", width=15, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         category_frame.grid(row=row+1, column=1, sticky="nsew")
-        subc_frame = tk.Label(self.scrollable_frame, text=subc, borderwidth=1, relief="solid", width=15, bg=bg_color)
+
+        subc_frame = tk.Label(self.scrollable_frame, text=subc, borderwidth=1, relief="solid", width=15, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         subc_frame.grid(row=row+1, column=2, sticky="nsew")
-        type_frame = tk.Label(self.scrollable_frame, text=type.capitalize(), borderwidth=1, relief="solid", width=10, bg=bg_color)
+
+        type_frame = tk.Label(self.scrollable_frame, text=type.capitalize(), borderwidth=1, relief="solid", width=10, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         type_frame.grid(row=row+1, column=3, sticky="nsew")
-        amount_frame = tk.Label(self.scrollable_frame, text=f"${amount}", borderwidth=1, relief="solid", width=10, bg=bg_color)
+
+        amount_frame = tk.Label(self.scrollable_frame, text=f"${amount}", borderwidth=1, relief="solid", width=10, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         amount_frame.grid(row=row+1, column=4, sticky="nsew")
 
         frames = [date_frame, category_frame, subc_frame, type_frame, amount_frame]
 
-        delete_button = ttk.Button(self.scrollable_frame, text="🗑 Delete", command=lambda: self.delete_transaction(transaction, frames, delete_button))
+        delete_button = ttk.Button(self.scrollable_frame, text="🗑 Delete", command=lambda: self.delete_transaction(transaction, frames, delete_button), style="TButton")
         delete_button.grid(row=row+1, column=5, sticky="nsew")
 
 
