@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 from datetime import date
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from collections import defaultdict
 
 from utils import validate_amount
 from models import Transaction, Data, FinanceTracker
@@ -8,6 +11,7 @@ from models import Transaction, Data, FinanceTracker
 class App:
     def __init__(self, root: tk.Tk):
         self.root: tk.Tk = root
+        self.root.protocol("WM_DELETE_WINDOW", self.quit_me)
         self.root.title("💰 MoneyLog")
         self.root.geometry("850x820")
         self.root.configure(bg="#f4f4f4")
@@ -15,6 +19,10 @@ class App:
         self.data: Data = Data()
 
         self.setup_ui()
+
+    def quit_me(self):
+        self.root.quit()
+        self.root.destroy()
 
     def setup_ui(self):
         # --- General styling ---
@@ -102,14 +110,14 @@ class App:
         chart_frame = tk.Frame(self.root, bg="#f4f4f4")
         chart_frame.pack(pady=10)
 
-        ttk.Button(chart_frame, text="📊 Show Charts", style="TButton").pack()
+        ttk.Button(chart_frame, text="📊 Show Charts", style="TButton", command=self.show_charts).pack()
 
     def _form_input(self, parent, text, row):
         label = tk.Label(parent, text=text, bg="white", font=("Comic Sans MS", 10, "bold"))
         label.grid(row=row, column=0, sticky="w", pady=3)
 
     def add_transaction(self):
-        amount = self.amount_entry.get()
+        amount = float(self.amount_entry.get())
         category = self.category_entry.get()
         type = self.type_var.get()
         subc = self.subc_entry.get()
@@ -153,5 +161,61 @@ class App:
             frame.destroy()
 
         button.destroy()
+
+    def show_charts(self):
+
+        # Create window
+        chart_window = tk.Toplevel(self.root)
+        chart_window.title("📊 Expense Charts")
+        chart_window.geometry("1000x500")
+        chart_window.configure(bg="white")
+
+        # Group expenses by category.
+        category_totals = defaultdict(float)
+        total_income = 0
+        total_expense = 0
+
+        for t in self.tracker.transactions:
+            amount = float(t.amount)
+            if t.type == "expense":
+                category_totals[t.category] += amount
+                total_expense += amount
+            elif t.type == "income":
+                total_income += amount
+
+        # Create matplotlib figure
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+        fig.tight_layout(pad=5.0)
+
+        # --- Bar plot ---
+        if category_totals:
+            categories = list(category_totals.keys())
+            totals = list(category_totals.values())
+
+            ax1.bar(categories, totals, color="#FF6666")
+            ax1.set_title("Expenses by Category")
+            ax1.set_ylabel("Amount ($)")
+            ax1.set_xlabel("Category")
+            ax1.tick_params(axis='x', rotation=45)
+        else:
+            ax1.text(0.5, 0.5, "No expenses yet", ha="center", va="center", fontsize=12)
+            ax1.axis("off")
+
+        # --- Pie  ---
+        if total_income > 0 or total_expense > 0:
+            labels = ['Income', 'Expenses']
+            values = [total_income, total_expense]
+            colors = ['#66ff66', '#FF6666']
+            ax2.pie(values, labels=labels, autopct='%1.1f%%', colors=colors, startangle=90)
+            ax2.set_title("Income vs Expenses")
+        else:
+            ax2.text(0.5, 0.5, "No data yet", ha="center", va="center", fontsize=12)
+            ax2.axis("off")
+
+        # Integrate with tkinter
+        canvas = FigureCanvasTkAgg(fig, master=chart_window)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
 
 
