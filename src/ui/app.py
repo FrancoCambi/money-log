@@ -9,7 +9,7 @@ class App:
     def __init__(self, root: tk.Tk):
         self.root: tk.Tk = root
         self.root.title("💰 MoneyLog")
-        self.root.geometry("620x820")
+        self.root.geometry("840x820")
         self.root.configure(bg="#f4f4f4")
         self.tracker: FinanceTracker = FinanceTracker()
         self.data: Data = Data()
@@ -46,8 +46,8 @@ class App:
         tk.Radiobutton(form_frame, text="Expense", variable=self.type_var, value="expense", bg="white").grid(row=2, column=1, sticky="e", pady=3)
 
         self._form_input(form_frame, "Sub-Category:", 3)
-        self.desc_entry = ttk.Entry(form_frame)
-        self.desc_entry.grid(row=3, column=1, pady=3, padx=5)
+        self.subc_entry = ttk.Entry(form_frame)
+        self.subc_entry.grid(row=3, column=1, pady=3, padx=5)
 
         self._form_input(form_frame, "Date (YYYY-MM-DD):", 4)
         self.date_entry = ttk.Entry(form_frame)
@@ -94,6 +94,10 @@ class App:
         self.canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
 
+        headers = ["Date", "Category", "Sub-Category", "Type", "Amount", "Action"]
+        for col, h in enumerate(headers):
+            tk.Label(self.scrollable_frame, text=h, font=("Arial", 10, "bold"), borderwidth=2, relief="groove", width=15, bg="lightgray").grid(row=0, column=col, sticky="nsew")
+
         # --- Charts Button ---
         chart_frame = tk.Frame(self.root, bg="#f4f4f4")
         chart_frame.pack(pady=10)
@@ -108,36 +112,42 @@ class App:
         amount = self.amount_entry.get()
         category = self.category_entry.get()
         type = self.type_var.get()
-        desc = self.desc_entry.get()
+        subc = self.subc_entry.get()
         date = self.date_entry.get()
 
-        transaction = Transaction(amount, category, type, date, desc)
+        transaction = Transaction(amount, category, type, date, subc)
         self.tracker.add_transaction(transaction)
 
         # Colors
         bg_color = "#66ff66" if transaction.type == "income" else "#FF6666"
 
-        # Transaction's frame
-        frame = tk.Frame(self.scrollable_frame, bg=bg_color, padx=10)
-        frame.grid(row=len(self.tracker.transactions) - 1, column=0, sticky="w", padx=5, pady=3)
-        frame.columnconfigure(0, weight=1)
+        row = len(self.scrollable_frame.winfo_children()) - 1  # -1 porque headers ocupa la primera fila
 
-        # Transaction's info
-        info = f"{transaction.date} | {transaction.type.capitalize()} | {transaction.category} | {transaction.subcat} | ${transaction.amount}"
-        label = tk.Label(frame, text=info, bg=bg_color, anchor="w", font=("Segoe UI", 10))
-        label.grid(row=0, column=0, sticky="w", padx=10)
+        date_frame = tk.Label(self.scrollable_frame, text=date, borderwidth=1, relief="solid", width=12, bg=bg_color)
+        date_frame.grid(row=row+1, column=0, sticky="nsew")
+        category_frame = tk.Label(self.scrollable_frame, text=category, borderwidth=1, relief="solid", width=15, bg=bg_color)
+        category_frame.grid(row=row+1, column=1, sticky="nsew")
+        subc_frame = tk.Label(self.scrollable_frame, text=subc, borderwidth=1, relief="solid", width=15, bg=bg_color)
+        subc_frame.grid(row=row+1, column=2, sticky="nsew")
+        type_frame = tk.Label(self.scrollable_frame, text=type.capitalize(), borderwidth=1, relief="solid", width=10, bg=bg_color)
+        type_frame.grid(row=row+1, column=3, sticky="nsew")
+        amount_frame = tk.Label(self.scrollable_frame, text=f"${amount}", borderwidth=1, relief="solid", width=10, bg=bg_color)
+        amount_frame.grid(row=row+1, column=4, sticky="nsew")
 
-        # Delte Button
-        delete_button = ttk.Button(frame, text="🗑 Delete", command=lambda: self.delete_transaction(transaction, frame))
-        delete_button.grid(row=0, column=2, sticky="e", padx=0)
+        frames = [date_frame, category_frame, subc_frame, type_frame, amount_frame]
+
+        delete_button = ttk.Button(self.scrollable_frame, text="🗑 Delete", command=lambda: self.delete_transaction(transaction, frames, delete_button))
+        delete_button.grid(row=row+1, column=5, sticky="nsew")
 
 
-    def delete_transaction(self, transaction: Transaction, frame: tk.Frame):
+    def delete_transaction(self, transaction: Transaction, frames: list[tk.Frame], button: ttk.Button):
 
         # Delete the transaction from the list
         self.tracker.delete_transaction(transaction)
 
-        # Delete the frame
-        frame.destroy()
+        for frame in frames:
+            frame.destroy()
+
+        button.destroy()
 
 
