@@ -8,7 +8,7 @@
 - 📅 View transaction history by date.
 - 📊 Visualize your financial data with bar and pie charts.
 - 🗂️ Filter and sort by date, category, or type (income/expense).
-- 💾 Data stored locally (e.g., CSV or SQLite).
+- 💾 Data stored locally (json).
 
 ## 🛠️ Technologies used
 - Python.
