@@ -3,7 +3,7 @@ from .app import App
 
 def main():
     root = tk.Tk()
-    app = App(root)
+    App(root)
     root.mainloop()
   
 
