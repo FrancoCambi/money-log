@@ -10,6 +10,11 @@
 - 🗂️ Filter and sort by date, category, or type (income/expense).
 - 💾 Data stored locally (e.g., CSV or SQLite).
 
-## 🛠️ Status: *In development*
+## 🛠️ Technologies used
+- Python.
+- Tkinter.
+- Matplotlib.
+
+## 🧪 Status: *In development*
 Still in development.
 
