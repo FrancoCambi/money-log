@@ -1,4 +1,4 @@
-# MoneyLog
+# 🗒️ MoneyLog
 
 **MoneyLog** is a simple desktop application built with **Python** and **Tkinter** that helps you track your personal finances. You can log income and expenses, view your transaction history, and analyze your data through visual charts.
 
