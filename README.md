@@ -4,11 +4,11 @@
 
 ## Features
 
-- 📥 Add income and expenses with category, amount, and description
-- 📅 View transaction history by date
-- 📊 Visualize your financial data with bar and pie charts
-- 🗂️ Filter and sort by date, category, or type (income/expense)
-- 💾 Data stored locally (e.g., CSV or SQLite)
+- 📥 Add income and expenses with category, amount, and sub-category.
+- 📅 View transaction history by date.
+- 📊 Visualize your financial data with bar and pie charts.
+- 🗂️ Filter and sort by date, category, or type (income/expense).
+- 💾 Data stored locally (e.g., CSV or SQLite).
 
 ## 🛠️ Status: *In development*
 Still in development.
