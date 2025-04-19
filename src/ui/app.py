@@ -1,17 +1,20 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from datetime import date
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from collections import defaultdict
+import platform
 
 from utils import validate_amount
-from models import Transaction, Data, FinanceTracker
+from models import Transaction, FinanceTracker, TransactionType
+from data import Data
 
 class App:
     def __init__(self, root: tk.Tk):
         self.root: tk.Tk = root
         self.root.protocol("WM_DELETE_WINDOW", self.quit_me)
+        self.root.resizable(False, False)
         self.root.title("💰 MoneyLog")
         self.root.geometry("850x820")
         self.root.configure(bg="#f4f4f4")
@@ -19,6 +22,9 @@ class App:
         self.data: Data = Data()
 
         self.setup_ui()
+
+        for transaction in self.data.load_transactions():
+            self.add_transaction(transaction)
 
     def quit_me(self):
         self.root.quit()
@@ -49,9 +55,9 @@ class App:
         self.category_entry.grid(row=1, column=1, pady=3, padx=5)
 
         self._form_input(form_frame, "Type:", 2)
-        self.type_var = tk.StringVar(value="expense")
-        tk.Radiobutton(form_frame, text="Income", variable=self.type_var, value="income", bg="white").grid(row=2, column=1, sticky="w", pady=3)
-        tk.Radiobutton(form_frame, text="Expense", variable=self.type_var, value="expense", bg="white").grid(row=2, column=1, sticky="e", pady=3)
+        self.type_var = tk.StringVar(value="Expense")
+        tk.Radiobutton(form_frame, text="Income", variable=self.type_var, value="Income", bg="white").grid(row=2, column=1, sticky="w", pady=3)
+        tk.Radiobutton(form_frame, text="Expense", variable=self.type_var, value="Expense", bg="white").grid(row=2, column=1, sticky="e", pady=3)
 
         self._form_input(form_frame, "Sub-Category:", 3)
         self.subc_entry = ttk.Entry(form_frame)
@@ -65,17 +71,10 @@ class App:
         ttk.Button(form_frame, text="➕ Add Transaction", style="TButton", command=self.add_transaction).grid(row=5, column=0, columnspan=2, pady=10)
 
         # --- Summary ---
-        summary_frame = tk.Frame(self.root, bg="#f4f4f4", pady=5)
-        summary_frame.pack(fill="x")
+        self.summary_frame = tk.Frame(self.root, bg="#f4f4f4", pady=5)
+        self.summary_frame.pack(fill="x")
 
-        self.income_label = ttk.Label(summary_frame, text="Income: $0", style="Header.TLabel")
-        self.income_label.pack(side="left", padx=20)
-
-        self.expense_label = ttk.Label(summary_frame, text="Expenses: $0", style="Header.TLabel")
-        self.expense_label.pack(side="left", padx=20)
-
-        self.balance_label = ttk.Label(summary_frame, text="Balance: $0", style="Header.TLabel")
-        self.balance_label.pack(side="right", padx=20)
+        self.update_summary()
 
         # --- Transactions list ---
         list_frame = tk.LabelFrame(self.root, text="🧾 Transactions", padx=10, pady=10, bg="white", font=("Comic Sans MS", 10, "bold"))
@@ -89,6 +88,8 @@ class App:
         self.scrollbar = ttk.Scrollbar(self.transaction_list, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = ttk.Frame(self.canvas)
 
+        self.bind_mousewheel(list_frame, self.canvas)
+        
         # Configurar scroll en el canvas
         self.scrollable_frame.bind(
             "<Configure>",
@@ -116,34 +117,81 @@ class App:
         label = tk.Label(parent, text=text, bg="white", font=("Comic Sans MS", 10, "bold"))
         label.grid(row=row, column=0, sticky="w", pady=3)
 
-    def add_transaction(self):
-        amount = float(self.amount_entry.get())
-        category = self.category_entry.get()
-        type = self.type_var.get()
-        subc = self.subc_entry.get()
-        date = self.date_entry.get()
+    def bind_mousewheel(self, widget, target_canvas):
 
-        transaction = Transaction(amount, category, type, date, subc)
+        system = platform.system()
+
+        if system == 'Windows':
+            widget.bind_all("<MouseWheel>", lambda event: target_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
+        elif system == 'Darwin':  # macOS 
+            widget.bind_all("<MouseWheel>", lambda event: target_canvas.yview_scroll(int(-1 * (event.delta)), "units"))
+        else:  # Linux
+            widget.bind_all("<Button-4>", lambda event: target_canvas.yview_scroll(-1, "units"))
+            widget.bind_all("<Button-5>", lambda event: target_canvas.yview_scroll(1, "units"))
+
+
+    def update_summary(self):
+
+        if self.summary_frame:
+            for child in self.summary_frame.winfo_children():
+                child.destroy()
+
+        self.income_label = ttk.Label(self.summary_frame, text=f"Income: ${self.tracker.total_incone}", style="Header.TLabel")
+        self.income_label.pack(side="left", padx=20)
+
+        self.expense_label = ttk.Label(self.summary_frame, text=f"Expenses: ${self.tracker.total_expenses}", style="Header.TLabel")
+        self.expense_label.pack(side="left", padx=20)
+
+        self.balance_label = ttk.Label(self.summary_frame, text=f"Balance: ${self.tracker.total_incone - self.tracker.total_expenses}", style="Header.TLabel")
+        self.balance_label.pack(side="right", padx=20)
+
+    def add_transaction(self, transaction: Transaction = None):
+
+        if not transaction:
+            amount = self.amount_entry.get()
+            category = self.category_entry.get()
+            type = self.type_var.get()
+            subc = self.subc_entry.get()
+            date = self.date_entry.get()
+
+            if amount == "" or category == "" or date == "" or subc == "":
+                messagebox.showerror("Empty fields", "Amount, date, category and subcategory, have to be non-empty.")
+                return
+            
+            amount = float(amount)
+
+            transaction = Transaction(amount, category, TransactionType(type), date, subc)
+
+
         self.tracker.add_transaction(transaction)
+        self.data.save_transactions(self.tracker.transactions)
 
         # Colors
-        bg_color = "#66ff66" if transaction.type == "income" else "#FF6666"
+        bg_color: str
+        if transaction.type == TransactionType.INCOME:
+            bg_color = "#66ff66"
+            self.tracker.total_incone += float(transaction.amount)
+        else: 
+            bg_color = "#FF6666"
+            self.tracker.total_expenses += float(transaction.amount)
 
+        self.update_summary()
+    
         row = len(self.scrollable_frame.winfo_children()) - 1
 
-        date_frame = tk.Label(self.scrollable_frame, text=date, borderwidth=1, relief="solid", width=12, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
+        date_frame = tk.Label(self.scrollable_frame, text=transaction.date, borderwidth=1, relief="solid", width=12, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         date_frame.grid(row=row+1, column=0, sticky="nsew")
 
-        category_frame = tk.Label(self.scrollable_frame, text=category, borderwidth=1, relief="solid", width=15, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
+        category_frame = tk.Label(self.scrollable_frame, text=transaction.category, borderwidth=1, relief="solid", width=15, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         category_frame.grid(row=row+1, column=1, sticky="nsew")
 
-        subc_frame = tk.Label(self.scrollable_frame, text=subc, borderwidth=1, relief="solid", width=15, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
+        subc_frame = tk.Label(self.scrollable_frame, text=transaction.subcat, borderwidth=1, relief="solid", width=15, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         subc_frame.grid(row=row+1, column=2, sticky="nsew")
 
-        type_frame = tk.Label(self.scrollable_frame, text=type.capitalize(), borderwidth=1, relief="solid", width=10, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
+        type_frame = tk.Label(self.scrollable_frame, text=transaction.type.value, borderwidth=1, relief="solid", width=10, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         type_frame.grid(row=row+1, column=3, sticky="nsew")
 
-        amount_frame = tk.Label(self.scrollable_frame, text=f"${amount}", borderwidth=1, relief="solid", width=10, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
+        amount_frame = tk.Label(self.scrollable_frame, text=f"${transaction.amount}", borderwidth=1, relief="solid", width=10, bg=bg_color, font=("Comic Sans MS", 9, "bold"))
         amount_frame.grid(row=row+1, column=4, sticky="nsew")
 
         frames = [date_frame, category_frame, subc_frame, type_frame, amount_frame]
@@ -152,42 +200,53 @@ class App:
         delete_button.grid(row=row+1, column=5, sticky="nsew")
 
 
+
     def delete_transaction(self, transaction: Transaction, frames: list[tk.Frame], button: ttk.Button):
 
         # Delete the transaction from the list
         self.tracker.delete_transaction(transaction)
+
+        if transaction.type == TransactionType.INCOME:
+            self.tracker.total_incone -= transaction.amount
+        else: 
+            self.tracker.total_expenses -= transaction.amount
+        self.update_summary()
 
         for frame in frames:
             frame.destroy()
 
         button.destroy()
 
-    def show_charts(self):
+        self.data.save_transactions(self.tracker.transactions)
 
+    def show_charts(self):
         # Create window
         chart_window = tk.Toplevel(self.root)
+        chart_window.resizable(False, False)
         chart_window.title("📊 Expense Charts")
-        chart_window.geometry("1000x500")
+        chart_window.geometry("1400x500")  # Más ancho para 3 gráficos
         chart_window.configure(bg="white")
 
-        # Group expenses by category.
+        # Agrupaciones
         category_totals = defaultdict(float)
+        subcategory_totals = defaultdict(float)
         total_income = 0
         total_expense = 0
 
         for t in self.tracker.transactions:
             amount = float(t.amount)
-            if t.type == "expense":
+            if t.type == TransactionType.EXPENSE:
                 category_totals[t.category] += amount
+                subcategory_totals[t.subcat] += amount
                 total_expense += amount
-            elif t.type == "income":
+            elif t.type == TransactionType.INCOME:
                 total_income += amount
 
-        # Create matplotlib figure
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+        # Create matplotlib figure con 3 gráficos en fila
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4))
         fig.tight_layout(pad=5.0)
 
-        # --- Bar plot ---
+        # --- Gráfico 1: Barras por categoría ---
         if category_totals:
             categories = list(category_totals.keys())
             totals = list(category_totals.values())
@@ -201,7 +260,7 @@ class App:
             ax1.text(0.5, 0.5, "No expenses yet", ha="center", va="center", fontsize=12)
             ax1.axis("off")
 
-        # --- Pie  ---
+        # --- Gráfico 2: Pie de ingresos vs egresos ---
         if total_income > 0 or total_expense > 0:
             labels = ['Income', 'Expenses']
             values = [total_income, total_expense]
@@ -212,10 +271,25 @@ class App:
             ax2.text(0.5, 0.5, "No data yet", ha="center", va="center", fontsize=12)
             ax2.axis("off")
 
-        # Integrate with tkinter
+        # --- Gráfico 3: Barras por subcategoría ---
+        if subcategory_totals:
+            subcategories = list(subcategory_totals.keys())
+            sub_totals = list(subcategory_totals.values())
+
+            ax3.bar(subcategories, sub_totals, color="#FF9999")
+            ax3.set_title("Expenses by Subcategory")
+            ax3.set_ylabel("Amount ($)")
+            ax3.set_xlabel("Subcategory")
+            ax3.tick_params(axis='x', rotation=45)
+        else:
+            ax3.text(0.5, 0.5, "No subcategories yet", ha="center", va="center", fontsize=12)
+            ax3.axis("off")
+
+        # Integración con tkinter
         canvas = FigureCanvasTkAgg(fig, master=chart_window)
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
+
 
 
 

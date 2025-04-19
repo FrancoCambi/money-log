@@ -15,5 +15,3 @@ class FinanceTracker:
 
         self.transactions.remove(transaction)
 
-    def calculate_balance(self):
-        pass

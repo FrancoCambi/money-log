@@ -6,3 +6,4 @@ def validate_amount(new_value):
         return True
     except ValueError:
         return False
+    
