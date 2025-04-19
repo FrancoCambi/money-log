@@ -45,7 +45,7 @@ class App:
         tk.Radiobutton(form_frame, text="Income", variable=self.type_var, value="income", bg="white").grid(row=2, column=1, sticky="w", pady=3)
         tk.Radiobutton(form_frame, text="Expense", variable=self.type_var, value="expense", bg="white").grid(row=2, column=1, sticky="e", pady=3)
 
-        self._form_input(form_frame, "Description:", 3)
+        self._form_input(form_frame, "Sub-Category:", 3)
         self.desc_entry = ttk.Entry(form_frame)
         self.desc_entry.grid(row=3, column=1, pady=3, padx=5)
 
@@ -118,17 +118,18 @@ class App:
         bg_color = "#66ff66" if transaction.type == "income" else "#FF6666"
 
         # Transaction's frame
-        frame = tk.Frame(self.scrollable_frame, bg=bg_color, padx=10, pady=5)
+        frame = tk.Frame(self.scrollable_frame, bg=bg_color, padx=10)
         frame.grid(row=len(self.tracker.transactions) - 1, column=0, sticky="w", padx=5, pady=3)
+        frame.columnconfigure(0, weight=1)
 
         # Transaction's info
-        info = f"{transaction.date} | {transaction.type.capitalize()} | {transaction.category} | {transaction.description} | ${transaction.amount}"
+        info = f"{transaction.date} | {transaction.type.capitalize()} | {transaction.category} | {transaction.subcat} | ${transaction.amount}"
         label = tk.Label(frame, text=info, bg=bg_color, anchor="w", font=("Segoe UI", 10))
-        label.grid(row=0, column=0, sticky="w")
+        label.grid(row=0, column=0, sticky="w", padx=10)
 
         # Delte Button
         delete_button = ttk.Button(frame, text="🗑 Delete", command=lambda: self.delete_transaction(transaction, frame))
-        delete_button.grid(row=0, column=2, sticky="e", padx=15)
+        delete_button.grid(row=0, column=2, sticky="e", padx=0)
 
 
     def delete_transaction(self, transaction: Transaction, frame: tk.Frame):
