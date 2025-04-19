@@ -15,6 +15,6 @@
 - Tkinter.
 - Matplotlib.
 
-## 🧪 Status: *In development*
-Still in development.
+## 🧪 Status: *Finished*
+Finished. This project was just for fun and some learning. :)
 
