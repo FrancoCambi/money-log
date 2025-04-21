@@ -2,6 +2,8 @@
 
 **MoneyLog** is a simple desktop application built with **Python** and **Tkinter** that helps you track your personal finances. You can log income and expenses, view your transaction history, and analyze your data through visual charts.
 
+---
+
 ## Features
 
 - 📥 Add income and expenses with category, amount, and sub-category.
@@ -10,13 +12,37 @@
 - 🗂️ Filter and sort by date, category, or type (income/expense).
 - 💾 Data stored locally (json).
 
+---
+
 ## 🛠️ Technologies used
 - Python.
 - Tkinter.
 - Matplotlib.
 
+---
+
 ## 🧪 Status: *Finished*
 Finished. This project was just for fun and some learning. :)
+
+---
+
+## 🪟 How to Run MoneyLog on Windows
+
+1. **Download the latest release**
+
+   Go to the [Releases](https://github.com/FrancoCambi/money-log/releases) section of this repository and download the latest version's `.zip` file (e.g. `MoneyLog-v1.0.0.zip`).
+
+2. **Run the application**
+
+   Simply double-click the `.exe` file inside the compressed folder to launch MoneyLog. No installation is required.
+
+---
+
+If you see a warning from Windows SmartScreen, click **"More info"** and then **"Run anyway"**. This happens because the app is not signed with a certificate.
+
+> 💡 The `.exe` version includes all required dependencies, including Tkinter and matplotlib.
+
+---
 
 ## 🐧 How to Run MoneyLog on Linux
 
